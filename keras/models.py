@@ -406,6 +406,8 @@ class Sequential(Model, containers.Sequential):
                                                allow_input_downcast=True, mode=theano_mode)
         self._predict = theano.function(predict_ins, self.y_test,
                                         allow_input_downcast=True, mode=theano_mode)
+        self._predict_stochastic = theano.function(predict_ins, self.y_train,
+                                        allow_input_downcast=True, mode=theano_mode)
         self._test = theano.function(test_ins, test_loss,
                                      allow_input_downcast=True, mode=theano_mode)
         self._test_with_acc = theano.function(test_ins, [test_loss, test_accuracy],
@@ -480,6 +482,10 @@ class Sequential(Model, containers.Sequential):
         X = standardize_X(X)
         return self._predict_loop(self._predict, X, batch_size, verbose)[0]
 
+    def predict_stochastic(self, X, batch_size=128, verbose=0):
+        X = standardize_X(X)
+        return self._predict_loop(self._predict_stochastic, X, batch_size, verbose)[0]
+        
     def predict_proba(self, X, batch_size=128, verbose=1):
         preds = self.predict(X, batch_size, verbose)
         if preds.min() < 0 or preds.max() > 1:
