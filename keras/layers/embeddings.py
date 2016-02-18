@@ -1,12 +1,16 @@
 from __future__ import absolute_import
 import theano
 import theano.tensor as T
+import numpy as np
 
 from .. import activations, initializations, regularizers, constraints
 from ..layers.core import Layer, MaskedLayer
 from ..utils.theano_utils import sharedX
 
 from ..constraints import unitnorm
+
+from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+from ..utils.theano_utils import shared_zeros
 
 
 class Embedding(Layer):
@@ -70,6 +74,79 @@ class Embedding(Layer):
                 "activity_regularizer": self.activity_regularizer.get_config() if self.activity_regularizer else None,
                 "W_regularizer": self.W_regularizer.get_config() if self.W_regularizer else None,
                 "W_constraint": self.W_constraint.get_config() if self.W_constraint else None}
+ 
+ 
+class DropoutEmbedding(Layer):
+    '''
+        Turn positive integers (indexes) into denses vectors of fixed size.
+        eg. [[4], [20]] -> [[0.25, 0.1], [0.6, -0.2]]
+
+        @input_dim: size of vocabulary (highest input integer + 1)
+        @out_dim: size of dense representation
+    '''
+    def __init__(self, input_dim, output_dim, init='uniform',
+                 W_regularizer=None, activity_regularizer=None, W_constraint=None,
+                 mask_zero=False, weights=None, p=0.5):
+
+        super(DropoutEmbedding, self).__init__()
+        self.init = initializations.get(init)
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.srng = RandomStreams(seed=np.random.randint(10e6))
+        self.p = shared_zeros((1))
+        self.p.set_value(np.array([p], dtype=theano.config.floatX))
+
+        self.input = T.imatrix()
+        self.W = self.init((self.input_dim, self.output_dim))
+        self.mask_zero = mask_zero
+
+        self.params = [self.W]
+
+        self.W_constraint = constraints.get(W_constraint)
+        self.constraints = [self.W_constraint]
+
+        self.regularizers = []
+
+        self.W_regularizer = regularizers.get(W_regularizer)
+        if self.W_regularizer:
+            self.W_regularizer.set_param(self.W)
+            self.regularizers.append(self.W_regularizer)
+
+        self.activity_regularizer = regularizers.get(activity_regularizer)
+        if self.activity_regularizer:
+            self.activity_regularizer.set_layer(self)
+            self.regularizers.append(self.activity_regularizer)
+
+        if weights is not None:
+            self.set_weights(weights)
+
+    def get_output_mask(self, train=None):
+        X = self.get_input(train)
+        if not self.mask_zero:
+            return None
+        else:
+            return T.ones_like(X) * (1 - T.eq(X, 0))
+
+    def get_output(self, train=False):
+        X = self.get_input(train)
+        retain_prob = 1. - self.p[0]
+        if train:
+            B = self.srng.binomial((1, self.input_dim), 
+                    p=retain_prob, dtype=theano.config.floatX)
+        else:
+            B = np.ones((1, self.input_dim), dtype=theano.config.floatX) * retain_prob
+        out = (self.W * B[0][:, None])[X]
+        return out
+
+    def get_config(self):
+        return {"name": self.__class__.__name__,
+                "input_dim": self.input_dim,
+                "output_dim": self.output_dim,
+                "init": self.init.__name__,
+                "activity_regularizer": self.activity_regularizer.get_config() if self.activity_regularizer else None,
+                "W_regularizer": self.W_regularizer.get_config() if self.W_regularizer else None,
+                "W_constraint": self.W_constraint.get_config() if self.W_constraint else None, 
+                "p": self.p}
 
 
 class WordContextProduct(Layer):
