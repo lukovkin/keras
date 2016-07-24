@@ -99,33 +99,43 @@ def test_deconvolution_2d():
 
     for border_mode in ['valid', 'same']:
         for subsample in [(1, 1), (2, 2)]:
-            if border_mode == 'same' and subsample != (1, 1):
-                continue
+            for infer_output_shape in [False, True]:
+                print("border_mode: {} subsample: {} infer output shape: {}".
+                      format(border_mode, subsample, infer_output_shape))
+                if border_mode == 'same' and subsample != (1, 1):
+                    continue
 
-            rows = conv_input_length(nb_row, 3, border_mode, subsample[0])
-            cols = conv_input_length(nb_col, 3, border_mode, subsample[1])
-            layer_test(convolutional.Deconvolution2D,
-                       kwargs={'nb_filter': nb_filter,
-                               'nb_row': 3,
-                               'nb_col': 3,
-                               'output_shape': (nb_samples, nb_filter, rows, cols),
-                               'border_mode': border_mode,
-                               'subsample': subsample},
-                       input_shape=(nb_samples, stack_size, nb_row, nb_col),
-                       fixed_batch_size=True)
+    #             rows = conv_input_length(nb_row, 3, border_mode, subsample[0])
+    #             cols = conv_input_length(nb_col, 3, border_mode, subsample[1])
+                if border_mode == 'same':
+                    rows = nb_row * subsample[0]
+                    cols = nb_col * subsample[1]
+                elif border_mode == 'valid':
+                    rows = (nb_row - 1) * subsample[0] + 3
+                    cols = (nb_col - 1) * subsample[1] + 3
 
-            layer_test(convolutional.Deconvolution2D,
-                       kwargs={'nb_filter': nb_filter,
-                               'nb_row': 3,
-                               'nb_col': 3,
-                               'output_shape': (nb_samples, nb_filter, rows, cols),
-                               'border_mode': border_mode,
-                               'W_regularizer': 'l2',
-                               'b_regularizer': 'l2',
-                               'activity_regularizer': 'activity_l2',
-                               'subsample': subsample},
-                       input_shape=(nb_samples, stack_size, nb_row, nb_col),
-                       fixed_batch_size=True)
+                layer_test(convolutional.Deconvolution2D,
+                           kwargs={'nb_filter': nb_filter,
+                                   'nb_row': 3,
+                                   'nb_col': 3,
+                                   'output_shape': None if infer_output_shape else (nb_samples, nb_filter, rows, cols),
+                                   'border_mode': border_mode,
+                                   'subsample': subsample},
+                           input_shape=(nb_samples, stack_size, nb_row, nb_col),
+                           fixed_batch_size=True)
+
+                layer_test(convolutional.Deconvolution2D,
+                           kwargs={'nb_filter': nb_filter,
+                                   'nb_row': 3,
+                                   'nb_col': 3,
+                                   'output_shape': None if infer_output_shape else (nb_samples, nb_filter, rows, cols),
+                                   'border_mode': border_mode,
+                                   'W_regularizer': 'l2',
+                                   'b_regularizer': 'l2',
+                                   'activity_regularizer': 'activity_l2',
+                                   'subsample': subsample},
+                           input_shape=(nb_samples, stack_size, nb_row, nb_col),
+                           fixed_batch_size=True)
 
 
 @keras_test
