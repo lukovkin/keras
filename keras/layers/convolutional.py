@@ -421,10 +421,10 @@ class Deconvolution2D(Convolution2D):
 
         if self.border_mode == 'same':
             rows = rows * self.subsample[0]
-            cols = cols * self.subsample[0]
+            cols = cols * self.subsample[1]
         elif self.border_mode == 'valid':
             rows = (rows - 1) * self.subsample[0] + self.nb_row
-            cols = (cols - 1) * self.subsample[0] + self.nb_col
+            cols = (cols - 1) * self.subsample[1] + self.nb_col
 
         if self.dim_ordering == 'th':
             return (input_shape[0], self.nb_filter, rows, cols)
