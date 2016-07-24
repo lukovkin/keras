@@ -436,7 +436,7 @@ class Deconvolution2D(Convolution2D):
 
     def call(self, x, mask=None):
         if not self.output_shape_:
-            self.output_shape_ = self.get_output_shape_for(x.shape)
+            self.output_shape_ = self.get_output_shape_for(K.shape(x))
         output = K.deconv2d(x, self.W, self.output_shape_, 
                             strides=self.subsample,
                             border_mode=self.border_mode,
