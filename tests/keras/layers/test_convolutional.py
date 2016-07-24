@@ -96,6 +96,8 @@ def test_deconvolution_2d():
     stack_size = 3
     nb_row = 10
     nb_col = 6
+    nb_filter_rows = 3
+    nb_filter_cols = 3
 
     for border_mode in ['valid', 'same']:
         for subsample in [(1, 1), (2, 2)]:
@@ -111,13 +113,13 @@ def test_deconvolution_2d():
                     rows = nb_row * subsample[0]
                     cols = nb_col * subsample[1]
                 elif border_mode == 'valid':
-                    rows = (nb_row - 1) * subsample[0] + 3
-                    cols = (nb_col - 1) * subsample[1] + 3
+                    rows = (nb_row - 1) * subsample[0] + nb_filter_rows
+                    cols = (nb_col - 1) * subsample[1] + nb_filter_cols
 
                 layer_test(convolutional.Deconvolution2D,
                            kwargs={'nb_filter': nb_filter,
-                                   'nb_row': 3,
-                                   'nb_col': 3,
+                                   'nb_row': nb_filter_rows,
+                                   'nb_col': nb_filter_cols,
                                    'output_shape': None if infer_output_shape else (nb_samples, nb_filter, rows, cols),
                                    'border_mode': border_mode,
                                    'subsample': subsample},
@@ -126,8 +128,8 @@ def test_deconvolution_2d():
 
                 layer_test(convolutional.Deconvolution2D,
                            kwargs={'nb_filter': nb_filter,
-                                   'nb_row': 3,
-                                   'nb_col': 3,
+                                   'nb_row': nb_filter_rows,
+                                   'nb_col': nb_filter_cols,
                                    'output_shape': None if infer_output_shape else (nb_samples, nb_filter, rows, cols),
                                    'border_mode': border_mode,
                                    'W_regularizer': 'l2',
