@@ -385,6 +385,9 @@ class Deconvolution2D(Convolution2D):
     provide the keyword argument `input_shape`
     (tuple of integers, does not include the sample axis),
     e.g. `input_shape=(3, 128, 128)` for 128x128 RGB pictures.
+    
+    # References
+        - [Deconvolutional Networks](http://www.matthewzeiler.com/pubs/cvpr2010/cvpr2010.pdf)
     '''
     def __init__(self, nb_filter, nb_row, nb_col, output_shape=None,
                  init='glorot_uniform', activation='linear', weights=None,
