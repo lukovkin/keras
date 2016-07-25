@@ -1052,7 +1052,15 @@ def deconv2d(x, kernel, output_shape, strides=(1, 1),
     kernel = kernel.dimshuffle((1, 0, 2, 3))
     th_border_mode = _preprocess_border_mode(border_mode)
     np_kernel = kernel.eval()
-    filter_shape = _preprocess_filter_shape(dim_ordering, filter_shape)
+    filter_shape = _preprocess_filter_shape(dim_ordering, shape(kernel))
+    
+    for v in output_shape:
+        try:
+            v = v.eval()
+        except AttributeError as e:
+            print(e.__str__())
+
+    print("imshp {} kshp {} subsample {} border_mode {} output_shape {}".format(output_shape, filter_shape, strides, th_border_mode, output_shape[2:]))
 
     op = T.nnet.abstract_conv.AbstractConv2d_gradInputs(imshp=output_shape,
                                                         kshp=filter_shape,
