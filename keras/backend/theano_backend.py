@@ -1054,11 +1054,15 @@ def deconv2d(x, kernel, output_shape, strides=(1, 1),
     np_kernel = kernel.eval()
     filter_shape = _preprocess_filter_shape(dim_ordering, shape(kernel))
     
+    _t = ()
     for v in output_shape:
         try:
-            v = v.eval()
+            _v = v.eval()
         except AttributeError as e:
+            _v = v
             print(e.__str__())
+        _t = _t + (v, )
+    output_shape = _t
 
     print("imshp {} kshp {} subsample {} border_mode {} output_shape {}".format(output_shape, filter_shape, strides, th_border_mode, output_shape[2:]))
 
